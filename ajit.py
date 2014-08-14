@@ -34,6 +34,22 @@ class Cursor:
         elif self.y >= height and self.dy > 0:
             self.y = 0
 
+class Stack:
+    def __init__(self):
+        self.list = []
+    def push(self, value):
+        self.list.append(value)
+    def pop(self):
+        return self.list.pop()
+    def duplicate(self):
+        self.list.append(self.list[-1])
+    def swap(self):
+        self.list[-1], self.list[-2] = self.list[-2], self.list[-1]
+    def send(self, to):
+        to.push(self.pop())
+    def __len__(self):
+        return len(self.list)
+
 class Machine:
     def __init__(self, codespace):
         self.cursor = Cursor(codespace)
@@ -89,9 +105,11 @@ def parse(code):
 def run(code):
     machine = Machine(parse(code))
     # TODO: run machine
-    machine.cursor.move()
-    code = machine.cursor.code()
-    print code
+    storage = Stack()
+    storage.push(1)
+    storage.push(2)
+    storage.swap()
+    print storage.pop(), storage.pop()
 
 def entry_point(argv):
     # filename = argv[0]
