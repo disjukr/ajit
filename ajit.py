@@ -11,13 +11,18 @@ class Cursor:
 
     def line(self):
         try:
-            line = self.codespace[self.y]
+            return self.codespace[self.y]
         except IndexError:
-            line = None
-        return line
+            return None
 
     def code(self):
-        return get_code(self.codespace, self.x, self.y)
+        line = self.line()
+        if line is None:
+            return (-1, -1, -1)
+        try:
+            return line[self.x]
+        except IndexError:
+            return (-1, -1, -1)
 
     def move(self):
         self.x = self.x + self.dx
@@ -34,25 +39,53 @@ class Cursor:
         elif self.y >= height and self.dy > 0:
             self.y = 0
 
-class Stack:
+class Storage:
     def __init__(self):
         self.list = []
+    def __len__(self):
+        return len(self.list)
     def push(self, value):
         self.list.append(value)
+    def send(self, to):
+        to.push(self.pop())
+    def pop(self):
+        pass
+    def duplicate(self):
+        pass
+    def swap(self):
+        pass
+
+class Stack(Storage):
     def pop(self):
         return self.list.pop()
     def duplicate(self):
         self.list.append(self.list[-1])
     def swap(self):
         self.list[-1], self.list[-2] = self.list[-2], self.list[-1]
-    def send(self, to):
-        to.push(self.pop())
-    def __len__(self):
-        return len(self.list)
+
+class Queue(Storage):
+    def pop(self):
+        return self.list.pop(0)
+    def duplicate(self):
+        self.list.insert(0, self.list[0])
+    def swap(self):
+        self.list[0], self.list[1] = self.list[1], self.list[0]
 
 class Machine:
     def __init__(self, codespace):
         self.cursor = Cursor(codespace)
+        self.storages = [Stack() if x < 26 else Queue() for x in range(28)]
+        self.terminate = None
+        self.select_storage(0)
+
+    def step(self):
+        code = self.cursor.code()
+
+    def get_storage(self, code):
+        return self.storages[code]
+
+    def select_storage(self, code):
+        self.current_storage = self.get_storage(code)
 
 def extract_index(func):
     def extractor(code):
@@ -73,17 +106,6 @@ def get_jung(syllable_code):
 def get_jong(syllable_code):
     return syllable_code % 28
 
-def get_code(codespace, x, y):
-    try:
-        line = codespace[y]
-    except IndexError:
-        return (-1, -1, -1)
-    try:
-        code = line[x]
-    except IndexError:
-        return (-1, -1, -1)
-    return code
-
 def parse(code):
     result = []
     line = []
@@ -102,14 +124,16 @@ def parse(code):
     result.append(line)
     return result
 
+def exit():
+    raise SystemExit
+
 def run(code):
     machine = Machine(parse(code))
+    machine.terminate = exit
     # TODO: run machine
-    storage = Stack()
-    storage.push(1)
-    storage.push(2)
-    storage.swap()
-    print storage.pop(), storage.pop()
+    print "terminate"
+    machine.terminate()
+    print "test"
 
 def entry_point(argv):
     # filename = argv[0]
@@ -122,7 +146,10 @@ def entry_point(argv):
             break
         code += read
     code = code.decode("utf-8")
-    run(code)
+    try:
+        run(code)
+    except SystemExit:
+        return 0
     return 0
 
 def target(*args):
