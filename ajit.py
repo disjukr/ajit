@@ -39,6 +39,33 @@ class Cursor:
         elif self.y >= height and self.dy > 0:
             self.y = 0
 
+    def reflect(self):
+        self.dx, self.dy = -self.dx, -self.dy
+
+    def turn(self, code):
+        if code == 0:
+            self.dx, self.dy = 1, 0
+        elif code == 2:
+            self.dx, self.dy = 2, 0
+        elif code == 4:
+            self.dx, self.dy = -1, 0
+        elif code == 6:
+            self.dx, self.dy = -2, 0
+        elif code == 8:
+            self.dx, self.dy = 0, -1
+        elif code == 12:
+            self.dx, self.dy = 0, -2
+        elif code == 13:
+            self.dx, self.dy = 0, 1
+        elif code == 17:
+            self.dx, self.dy = 0, 2
+        elif code == 18:
+            self.dy = -self.dy
+        elif code == 19:
+            self.reflect()
+        elif code == 20:
+            self.dx = -self.dx
+
 class Storage:
     def __init__(self):
         self.list = []
@@ -49,7 +76,7 @@ class Storage:
     def send(self, to):
         to.push(self.pop())
     def pop(self):
-        pass
+        return 0
     def duplicate(self):
         pass
     def swap(self):
@@ -57,7 +84,10 @@ class Storage:
 
 class Stack(Storage):
     def pop(self):
-        return self.list.pop()
+        try:
+            return self.list.pop()
+        except IndexError:
+            return 0
     def duplicate(self):
         self.list.append(self.list[-1])
     def swap(self):
@@ -65,7 +95,10 @@ class Stack(Storage):
 
 class Queue(Storage):
     def pop(self):
-        return self.list.pop(0)
+        try:
+            return self.list.pop(0)
+        except IndexError:
+            return 0
     def duplicate(self):
         self.list.insert(0, self.list[0])
     def swap(self):
@@ -75,17 +108,39 @@ class Machine:
     def __init__(self, codespace):
         self.cursor = Cursor(codespace)
         self.storages = [Stack() if x < 26 else Queue() for x in range(28)]
-        self.terminate = None
         self.select_storage(0)
 
+    def run(self):
+        # self.terminate_flag = False
+        self.terminate_flag = True # temporary
+        while not self.terminate_flag:
+            self.step()
+        try:
+            raise AheuiExit(self.current_storage.pop())
+        except IndexError:
+            raise AheuiExit(0)
+
     def step(self):
-        code = self.cursor.code()
+        cho, jung, jong = self.cursor.code()
+        operation = get_operation(cho)
+        self.cursor.turn(jung)
+        if len(self.current_storage) < get_parameter_required(cho):
+            self.cursor.reflect()
+        else:
+            self.terminate_flag = operation(self, jong)
+        self.cursor.move()
 
     def get_storage(self, code):
         return self.storages[code]
 
     def select_storage(self, code):
         self.current_storage = self.get_storage(code)
+
+class AheuiExit(Exception):
+    def __init__(self, exit_code):
+        self.code = exit_code
+    def __str__(self):
+        return "Aheui machine terminated with exit code: " + str(self.code)
 
 def extract_index(func):
     def extractor(code):
@@ -124,17 +179,6 @@ def parse(code):
     result.append(line)
     return result
 
-def exit():
-    raise SystemExit
-
-def run(code):
-    machine = Machine(parse(code))
-    machine.terminate = exit
-    # TODO: run machine
-    print "terminate"
-    machine.terminate()
-    print "test"
-
 def entry_point(argv):
     # filename = argv[0]
     filename = "99dan.aheui"
@@ -146,10 +190,11 @@ def entry_point(argv):
             break
         code += read
     code = code.decode("utf-8")
+    machine = Machine(parse(code))
     try:
-        run(code)
-    except SystemExit:
-        return 0
+        machine.run()
+    except AheuiExit as e:
+        return e.code
     return 0
 
 def target(*args):
