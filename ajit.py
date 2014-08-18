@@ -19,13 +19,48 @@ def push_value(machine, code):
         value = get_stroke_count(code)
     machine.current_storage.push(value)
 
+def arithmetic(func):
+    def operation(machine, code):
+        storage = machine.current_storage
+        right = storage.pop()
+        left = storage.pop()
+        storage.push(func(left, right))
+    return operation
+
+@arithmetic
+def add(left, right):
+    return left + right
+
+@arithmetic
+def subtract(left, right):
+    return left - right
+
+@arithmetic
+def multiply(left, right):
+    return left * right
+
+@arithmetic
+def divide(left, right):
+    return left // right
+
+@arithmetic
+def modulo(left, right):
+    return left % right
+
+def extract_index(func):
+    def extractor(code):
+        if 0xac00 <= code <= 0xd7a3:
+            return func(code - 0xac00)
+        return -1
+    return extractor
+
 operation_table = [
     (do_nothing, 0),                    # 0
     (do_nothing, 0),                    # 1
-    (do_nothing, 0),                    # 2
-    (do_nothing, 0),                    # 3
-    (do_nothing, 0),                    # 4
-    (do_nothing, 0),                    # 5
+    (divide, 2),                        # 2
+    (add, 2),                           # 3
+    (multiply, 2),                      # 4
+    (modulo, 2),                        # 5
     (do_nothing, 0),                    # 6
     (push_value, 0),                    # 7
     (do_nothing, 0),                    # 8
@@ -36,7 +71,7 @@ operation_table = [
     (do_nothing, 0),                    # 13
     (do_nothing, 0),                    # 14
     (do_nothing, 0),                    # 15
-    (do_nothing, 0),                    # 16
+    (subtract, 2),                      # 16
     (do_nothing, 0),                    # 17
     (exit_machine, 0),                  # 18
 ]
