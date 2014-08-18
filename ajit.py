@@ -61,13 +61,6 @@ def divide(left, right):
 def modulo(left, right):
     return left % right
 
-def extract_index(func):
-    def extractor(code):
-        if 0xac00 <= code <= 0xd7a3:
-            return func(code - 0xac00)
-        return -1
-    return extractor
-
 operation_table = [
     (do_nothing, 0),                    # 0
     (do_nothing, 0),                    # 1
