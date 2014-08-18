@@ -5,10 +5,10 @@ ajit
 
 ```sh
 # just run in python 2
-python ajit.py
+python ajit.py <aheui_program>
 
 # translate with pypy, and execute
 hg clone https://bitbucket.org/pypy/pypy
 python pypy/rpython/bin/rpython ajit.py
-./ajit-c
+./ajit-c <aheui_program>
 ```

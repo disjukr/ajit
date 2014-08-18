@@ -316,8 +316,7 @@ def aheui_output(value):
     os.write(1, value.encode('utf-8'))
 
 def entry_point(argv):
-    # filename = argv[0]
-    filename = "99dan.aheui"
+    filename = argv[1]
     fp = os.open(filename, os.O_RDONLY, 0777)
     code = ""
     while True:
