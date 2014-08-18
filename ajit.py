@@ -15,14 +15,21 @@ def send(machine, code):
 
 def compare(machine, code):
     storage = machine.current_storage
-    if (storage.pop() > storage.pop()):
+    if storage.pop() > storage.pop():
         storage.push(0)
     else:
         storage.push(1)
 
 def decide(machine, code):
-    if (machine.current_storage.pop() == 0):
+    if machine.current_storage.pop() == 0:
         machine.cursor.reflect()
+
+def pop(machine, code):
+    value = machine.current_storage.pop()
+    if code == 21:
+        print value                     #TODO: output number repr
+    elif code == 27:
+        print unichr(value)             #TODO: output character
 
 def push(machine, code):
     if code == 21:
@@ -32,6 +39,12 @@ def push(machine, code):
     else:
         value = get_stroke_count(code)
     machine.current_storage.push(value)
+
+def duplicate(machine, code):
+    machine.current_storage.duplicate()
+
+def swap(machine, code):
+    machine.current_storage.swap()
 
 def arithmetic(func):
     def operation(machine, code):
@@ -68,9 +81,9 @@ operation_table = [
     (add, 2),                           # 3
     (multiply, 2),                      # 4
     (modulo, 2),                        # 5
-    (do_nothing, 0),                    # 6
+    (pop, 1),                           # 6
     (push, 0),                          # 7
-    (do_nothing, 0),                    # 8
+    (duplicate, 1),                     # 8
     (select_storage, 0),                # 9
     (send, 1),                          # 10
     (do_nothing, 0),                    # 11
@@ -79,7 +92,7 @@ operation_table = [
     (decide, 1),                        # 14
     (do_nothing, 0),                    # 15
     (subtract, 2),                      # 16
-    (do_nothing, 0),                    # 17
+    (swap, 2),                          # 17
     (exit_machine, 0),                  # 18
 ]
 
@@ -218,7 +231,10 @@ class Queue(Storage):
 class Machine:
     def __init__(self, codespace):
         self.cursor = Cursor(codespace)
-        self.storages = [Stack() if x < 26 else Queue() for x in range(28)]
+        self.storages = [
+            Queue() if x == 21 or x == 27 else Stack()
+            for x in range(28)
+        ]
         self.select_storage(0)
 
     def run(self):
