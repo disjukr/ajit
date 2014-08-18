@@ -26,16 +26,17 @@ def decide(machine, code):
 
 def pop(machine, code):
     value = machine.current_storage.pop()
+    output = machine.output
     if code == 21:
-        print value                     #TODO: output number repr
+        output(unicode(str(value)))
     elif code == 27:
-        print unichr(value)             #TODO: output character
+        output(unichr(value))
 
 def push(machine, code):
     if code == 21:
-        value = 0                       #TODO: input number
+        value = machine.number_input()
     elif code == 27:
-        value = 1                       #TODO: input character code
+        value = machine.character_input()
     else:
         value = get_stroke_count(code)
     machine.current_storage.push(value)
@@ -305,6 +306,15 @@ def parse(code):
     result.append(line)
     return result
 
+def aheui_number_input():
+    return 0
+
+def aheui_character_input():
+    return 1
+
+def aheui_output(value):
+    os.write(1, value.encode('utf-8'))
+
 def entry_point(argv):
     # filename = argv[0]
     filename = "99dan.aheui"
@@ -317,6 +327,9 @@ def entry_point(argv):
         code += read
     code = code.decode("utf-8")
     machine = Machine(parse(code))
+    machine.number_input = aheui_number_input
+    machine.character_input = aheui_character_input
+    machine.output = aheui_output
     try:
         machine.run()
     except AheuiExit as e:
