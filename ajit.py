@@ -10,7 +10,21 @@ def exit_machine(machine, code):
 def select_storage(machine, code):
     machine.select_storage(code)
 
-def push_value(machine, code):
+def send(machine, code):
+    machine.current_storage.send(machine.get_storage(code))
+
+def compare(machine, code):
+    storage = machine.current_storage
+    if (storage.pop() > storage.pop()):
+        storage.push(0)
+    else:
+        storage.push(1)
+
+def decide(machine, code):
+    if (machine.current_storage.pop() == 0):
+        machine.cursor.reflect()
+
+def push(machine, code):
     if code == 21:
         value = 0                       #TODO: input number
     elif code == 27:
@@ -62,14 +76,14 @@ operation_table = [
     (multiply, 2),                      # 4
     (modulo, 2),                        # 5
     (do_nothing, 0),                    # 6
-    (push_value, 0),                    # 7
+    (push, 0),                          # 7
     (do_nothing, 0),                    # 8
     (select_storage, 0),                # 9
-    (do_nothing, 0),                    # 10
+    (send, 1),                          # 10
     (do_nothing, 0),                    # 11
-    (do_nothing, 0),                    # 12
+    (compare, 2),                       # 12
     (do_nothing, 0),                    # 13
-    (do_nothing, 0),                    # 14
+    (decide, 1),                        # 14
     (do_nothing, 0),                    # 15
     (subtract, 2),                      # 16
     (do_nothing, 0),                    # 17
