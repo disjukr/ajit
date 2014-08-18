@@ -1,6 +1,73 @@
 import os
 import sys
 
+def do_nothing(machine, code):
+    return
+
+def exit_machine(machine, code):
+    machine.terminate_flag = True
+
+def select_storage(machine, code):
+    machine.select_storage(code)
+
+def push_value(machine, code):
+    if code == 21:
+        value = 0                       #TODO: input number
+    elif code == 27:
+        value = 1                       #TODO: input character code
+    else:
+        value = get_stroke_count(code)
+    machine.current_storage.push(value)
+
+operation_table = [
+    (do_nothing, 0),                    # 0
+    (do_nothing, 0),                    # 1
+    (do_nothing, 0),                    # 2
+    (do_nothing, 0),                    # 3
+    (do_nothing, 0),                    # 4
+    (do_nothing, 0),                    # 5
+    (do_nothing, 0),                    # 6
+    (push_value, 0),                    # 7
+    (do_nothing, 0),                    # 8
+    (select_storage, 0),                # 9
+    (do_nothing, 0),                    # 10
+    (do_nothing, 0),                    # 11
+    (do_nothing, 0),                    # 12
+    (do_nothing, 0),                    # 13
+    (do_nothing, 0),                    # 14
+    (do_nothing, 0),                    # 15
+    (do_nothing, 0),                    # 16
+    (do_nothing, 0),                    # 17
+    (exit_machine, 0),                  # 18
+]
+
+def get_operation(code):
+    try:
+        return operation_table[code][0]
+    except IndexError:
+        return do_nothing
+
+def get_parameter_required(code):
+    try:
+        return operation_table[code][1]
+    except IndexError:
+        return 0
+
+stroke_count_table = [
+    0, 2, 4, 4, 2,
+    5, 5, 3, 5, 7,
+    9, 9, 7, 9, 9,
+    8, 4, 4, 6, 2,
+    4, 1, 3, 4, 3,
+    4, 4, 3,
+]
+
+def get_stroke_count(code):
+    try:
+        return stroke_count_table[code]
+    except IndexError:
+        return 0
+
 class Cursor:
     def __init__(self, codespace, x=0, y=0, dx=0, dy=1):
         self.codespace = codespace
@@ -70,6 +137,8 @@ class Storage:
     def __init__(self):
         self.list = []
     def __len__(self):
+        return self.count()
+    def count(self):
         return len(self.list)
     def push(self, value):
         self.list.append(value)
@@ -111,8 +180,7 @@ class Machine:
         self.select_storage(0)
 
     def run(self):
-        # self.terminate_flag = False
-        self.terminate_flag = True # temporary
+        self.terminate_flag = False
         while not self.terminate_flag:
             self.step()
         try:
@@ -124,10 +192,10 @@ class Machine:
         cho, jung, jong = self.cursor.code()
         operation = get_operation(cho)
         self.cursor.turn(jung)
-        if len(self.current_storage) < get_parameter_required(cho):
+        if self.current_storage.count() < get_parameter_required(cho):
             self.cursor.reflect()
         else:
-            self.terminate_flag = operation(self, jong)
+            operation(self, jong)
         self.cursor.move()
 
     def get_storage(self, code):
