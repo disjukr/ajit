@@ -312,11 +312,31 @@ def parse(code):
     result.append(line)
     return result
 
+def read_character():
+    bytes = ""
+    while True:
+        byte = os.read(0, 1)
+        if len(byte) == 0:
+            break
+        bytes = bytes + byte
+        try:
+            char = bytes.decode("utf-8")[0]
+            charcode = ord(char)
+            cond1 = len(bytes) != 1 and charcode == 0
+            cond2 = ord(byte[0]) != charcode == 0
+            if cond1 or cond2:
+                continue
+            else:
+                return char
+        except UnicodeError:
+            pass
+    return u"\x00"[0]
+
 def aheui_number_input():
     return 0
 
 def aheui_character_input():
-    return 1
+    return ord(read_character())
 
 def aheui_output(value):
     os.write(1, value.encode("utf-8"))
