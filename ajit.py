@@ -2,7 +2,7 @@ import os
 import sys
 
 def do_nothing(machine, code):
-    return
+    pass
 
 def exit_machine(machine, code):
     machine.terminate_flag = True
@@ -99,13 +99,19 @@ operation_table = [
 
 def get_operation(code):
     try:
-        return operation_table[code][0]
+        if code < 0:
+            return do_nothing
+        else:
+            return operation_table[code][0]
     except IndexError:
         return do_nothing
 
 def get_parameter_required(code):
     try:
-        return operation_table[code][1]
+        if code < 0:
+            return 0
+        else:
+            return operation_table[code][1]
     except IndexError:
         return 0
 
@@ -313,7 +319,7 @@ def aheui_character_input():
     return 1
 
 def aheui_output(value):
-    os.write(1, value.encode('utf-8'))
+    os.write(1, value.encode("utf-8"))
 
 def entry_point(argv):
     filename = argv[1]
