@@ -322,9 +322,8 @@ def read_character():
         try:
             char = bytes.decode("utf-8")[0]
             charcode = ord(char)
-            cond1 = len(bytes) != 1 and charcode == 0
-            cond2 = ord(byte[0]) != charcode == 0
-            if cond1 or cond2:
+            if (len(bytes) != 1 and charcode == 0 or
+                ord(byte[0]) != charcode == 0):
                 continue
             else:
                 return char
@@ -333,7 +332,19 @@ def read_character():
     return u"\x00"[0]
 
 def aheui_number_input():
-    return 0
+    buf = ""
+    last = -1
+    while True:
+        char = read_character()
+        charcode = ord(char)
+        if (charcode == 0 or charcode == 10 or
+            charcode == 13 or charcode == 32):
+            return last
+        buf = buf + str(char)
+        try:
+            last = int(buf)
+        except ValueError:
+            return last
 
 def aheui_character_input():
     return ord(read_character())
