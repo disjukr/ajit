@@ -1,6 +1,14 @@
 import os
 import sys
 
+from rpython.rlib.jit import JitDriver
+from rpython.jit.codewriter.policy import JitPolicy
+
+jitdriver = JitDriver(greens=['cursor'], reds=['machine', 'storages'])
+
+def jitpolicy(driver):
+    return JitPolicy()
+
 def do_nothing(machine, code):
     pass
 
@@ -273,7 +281,7 @@ class AheuiExit(Exception):
     def __init__(self, exit_code):
         self.code = exit_code
     def __str__(self):
-        return "Aheui machine terminated with exit code: " + str(self.code)
+        return 'Aheui machine terminated with exit code: ' + str(self.code)
 
 def extract_index(func):
     def extractor(code):
@@ -298,9 +306,9 @@ def parse(code):
     result = []
     line = []
     for char in code:
-        if char == u"\r":
+        if char == u'\r':
             continue
-        elif char == u"\n":
+        elif char == u'\n':
             result.append(line)
             line = []
         else:
@@ -313,14 +321,14 @@ def parse(code):
     return result
 
 def read_character():
-    bytes = ""
+    bytes = ''
     while True:
         byte = os.read(0, 1)
         if len(byte) == 0:
             break
         bytes = bytes + byte
         try:
-            char = bytes.decode("utf-8")[0]
+            char = bytes.decode('utf-8')[0]
             charcode = ord(char)
             if (len(bytes) != 1 and charcode == 0 or
                 ord(byte[0]) != charcode == 0):
@@ -329,10 +337,10 @@ def read_character():
                 return char
         except UnicodeError:
             pass
-    return u"\x00"[0]
+    return u'\x00'[0]
 
 def aheui_number_input():
-    buf = ""
+    buf = ''
     last = -1
     while True:
         char = read_character()
@@ -350,24 +358,38 @@ def aheui_character_input():
     return ord(read_character())
 
 def aheui_output(value):
-    os.write(1, value.encode("utf-8"))
+    os.write(1, value.encode('utf-8'))
+
+def jit_loop(machine, cursor, storages):
+    machine.terminate_flag = False
+    while not machine.terminate_flag:
+        jitdriver.jit_merge_point(machine=machine, cursor=cursor, storages=storages)
+        machine.step()
+    try:
+        raise AheuiExit(machine.current_storage.pop())
+    except IndexError:
+        raise AheuiExit(0)
 
 def entry_point(argv):
     filename = argv[1]
     fp = os.open(filename, os.O_RDONLY, 0777)
-    code = ""
+    code = ''
     while True:
         read = os.read(fp, 4096)
         if len(read) == 0:
             break
         code += read
-    code = code.decode("utf-8")
+    code = code.decode('utf-8')
     machine = Machine(parse(code))
     machine.number_input = aheui_number_input
     machine.character_input = aheui_character_input
     machine.output = aheui_output
+    # try:
+    #     machine.run()
+    # except AheuiExit as e:
+    #     return e.code
     try:
-        machine.run()
+        jit_loop(machine, machine.cursor, machine.storages)
     except AheuiExit as e:
         return e.code
     return 0
@@ -375,5 +397,5 @@ def entry_point(argv):
 def target(*args):
     return entry_point, None
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     entry_point(sys.argv)
