@@ -30,10 +30,7 @@ def send(machine, code):
 
 def compare(machine, code):
     storage = machine.current_storage
-    if storage.pop() > storage.pop():
-        storage.push(0)
-    else:
-        storage.push(1)
+    storage.push(0 if storage.pop() > storage.pop() else 1)
 
 def decide(machine, code):
     if machine.current_storage.pop() == 0:
@@ -235,9 +232,11 @@ class Stack(Storage):
         except IndexError:
             return 0
     def duplicate(self):
-        self.list.append(self.list[-1])
+        list = self.list
+        list.append(list[-1])
     def swap(self):
-        self.list[-1], self.list[-2] = self.list[-2], self.list[-1]
+        list = self.list
+        list[-1], list[-2] = list[-2], list[-1]
 
 class Queue(Storage):
     def pop(self):
@@ -246,9 +245,11 @@ class Queue(Storage):
         except IndexError:
             return 0
     def duplicate(self):
-        self.list.insert(0, self.list[0])
+        list = self.list
+        list.insert(0, list[0])
     def swap(self):
-        self.list[0], self.list[1] = self.list[1], self.list[0]
+        list = self.list
+        list[0], list[1] = list[1], list[0]
 
 class Machine:
     def __init__(self, codespace):
