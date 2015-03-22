@@ -1,8 +1,15 @@
 import os
 import sys
 
-from rpython.rlib.jit import JitDriver
-from rpython.jit.codewriter.policy import JitPolicy
+try:
+    from rpython.rlib.jit import JitDriver
+    from rpython.jit.codewriter.policy import JitPolicy
+except ImportError:
+    class JitDriver(object):
+        def __init__(self,**kw): pass
+        def jit_merge_point(self,**kw): pass
+        def can_enter_jit(self,**kw): pass
+    def purefunction(f): return f
 
 jitdriver = JitDriver(greens=['cursor'], reds=['machine', 'storages'])
 
